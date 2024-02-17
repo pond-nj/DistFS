@@ -1,0 +1,113 @@
+
+bb_init()
+    conn:
+    proto_major = 7
+    proto_minor = 38
+    async_read = 1
+    max_write = 131072
+    max_readahead = 131072
+    capable = 00000ffb
+    want = 00000010
+    max_background = 0
+    congestion_threshold = 0
+    context:
+    fuse = 1c904770
+    uid = 0
+    gid = 0
+    pid = 0
+    private_data = 1c9042a0
+    logfile = 1c9042f0
+    rootdir = /home/ubuntu/DistFS/rootdir
+    umask = 00000
+
+bb_getattr(path="/", statbuf=0x1f1feb70)
+    bb_fullpath:  rootdir = "/home/ubuntu/DistFS/rootdir", path = "/", fpath = "/home/ubuntu/DistFS/rootdir/"
+    lstat returned 0
+    si:
+    st_dev = 51713
+    st_ino = 265804
+    st_mode = 040775
+    st_nlink = 2
+    st_uid = 1000
+    st_gid = 1000
+    st_rdev = 0
+    st_size = 4096
+    st_blksize = 4096
+    st_blocks = 8
+    st_atime = 0x65d03130
+    st_mtime = 0x65d0312f
+    st_ctime = 0x65d0312f
+
+bb_opendir(path="/", fi=0x1e9fdb90)
+    bb_fullpath:  rootdir = "/home/ubuntu/DistFS/rootdir", path = "/", fpath = "/home/ubuntu/DistFS/rootdir/"
+    opendir returned 0x0x7fb810000dd0
+    fi:
+    flags = 0x00018800
+    fh_old = 0x00000000
+    writepage = 0
+    direct_io = 0
+    keep_cache = 0
+    fh = 0x00007fb810000dd0
+    lock_owner = 0x0000000000000000
+
+bb_readdir(path="/", buf=0x10000c40, filler=0x1f5b1ac0, offset=0, fi=0x1f1feb90)
+    readdir returned 0x0x7fb810000e00
+calling filler with name ..
+calling filler with name tmp
+calling filler with name .
+    fi:
+    flags = 0x00000000
+    fh_old = 0x7fb810000dd0
+    writepage = 0
+    direct_io = 0
+    keep_cache = 0
+    fh = 0x00007fb810000dd0
+    lock_owner = 0x0000000000000000
+
+bb_getattr(path="/tmp", statbuf=0x1e9fdba0)
+    bb_fullpath:  rootdir = "/home/ubuntu/DistFS/rootdir", path = "/tmp", fpath = "/home/ubuntu/DistFS/rootdir/tmp"
+    lstat returned 0
+    si:
+    st_dev = 51713
+    st_ino = 265806
+    st_mode = 0100664
+    st_nlink = 1
+    st_uid = 1000
+    st_gid = 1000
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 4096
+    st_blocks = 0
+    st_atime = 0x65d0312f
+    st_mtime = 0x65d0312f
+    st_ctime = 0x65d0312f
+
+bb_releasedir(path="/", fi=0x1e9fdb90)
+    fi:
+    flags = 0x00000000
+    fh_old = 0x7fb810000dd0
+    writepage = 0
+    direct_io = 0
+    keep_cache = 0
+    fh = 0x00007fb810000dd0
+    lock_owner = 0x0000000000000000
+
+bb_getattr(path="/", statbuf=0x1f1feb70)
+    bb_fullpath:  rootdir = "/home/ubuntu/DistFS/rootdir", path = "/", fpath = "/home/ubuntu/DistFS/rootdir/"
+    lstat returned 0
+    si:
+    st_dev = 51713
+    st_ino = 265804
+    st_mode = 040775
+    st_nlink = 2
+    st_uid = 1000
+    st_gid = 1000
+    st_rdev = 0
+    st_size = 4096
+    st_blksize = 4096
+    st_blocks = 8
+    st_atime = 0x65d03130
+    st_mtime = 0x65d0312f
+    st_ctime = 0x65d0312f
+
+bb_destroy(userdata=0x1c9042a0)
