@@ -1,11 +1,11 @@
 #include <stdio.h>
 
 struct cache_meta {
-  File* f;
+  int fd;
   char* name;
 }
 
 struct caches {
   struct cache_meta* meta;
-  int num_cache;
+  int num_open_caches;
 }

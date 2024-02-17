@@ -292,7 +292,7 @@ int fs_read(const char *path, char *buf, size_t size, off_t offset,
 
   // TODO(Pond): maybe there is no need to load the whole file into cache?
   if (!has_cache(path)) {
-    remote_to_cache(path, buf, size);
+    remote_to_cache(path);
   }
 
   return log_syscall("read_from_cache",
