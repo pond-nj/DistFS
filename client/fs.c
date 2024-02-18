@@ -319,6 +319,9 @@ int fs_write(const char *path, const char *buf, size_t size, off_t offset,
   // no need to get fpath on this one, since I work from fi->fh not the path
   log_fi(fi);
 
+  assert(size != 0);  // does not allow file of size 0
+  // TODO(Pond): change pwrite here
+
   return log_syscall("pwrite", pwrite(fi->fh, buf, size, offset), 0);
 }
 

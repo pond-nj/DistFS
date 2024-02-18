@@ -1,6 +1,7 @@
 #include "dist.h"
 
 #include <arpa/inet.h>
+#include <protocol.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,6 +9,7 @@
 #include <unistd.h>
 
 #include "cache.h"
+#include "env.h"
 #include "meta.h"
 #include "params.h"
 
@@ -57,19 +59,34 @@ size_t get_fragment_size(size_t file_size) {
 
 ssize_t read_fragment(const char* name, int sd, char* buf, size_t max_size) {
   // TODO(Pond): should we do loop to read??
-  send(sd, name, strlen(name), 0);
+  char msg_buf[MSG_BUF_LEN];
+  encrypt(new_message(READ, max_size, name), msg_buf);
+  send(sd, msg_buf, MSG_BUF_LEN, 0);
   // TODO(Pond): do assert check on what read returns
-  return read(sd, buffer, max_size);
+  ssize_t read_bytes = read(sd, buf, max_size);
+  assert(read_bytes == max_size);
+
+  encrypt(message_ok(), msg_buf);
+  return send(sd, msg_buf, MSG_BUF_LEN, 0);
 }
 
 void send_fragment(const char* name, int sd, char* buf, size_t fragment_size) {
   // TODO(Pond): should we distinguish between read and write operation?
   // TODO(Pond): is send a blocking operation?
-  send(sd, name, strlen(name), 0);
+  char msg_buf[MSG_BUF_LEN];
+  encrypt(new_message(READ, max_size, name), msg_buf);
+  send(sd, msg_buf, MSG_BUF_LEN, 0);
+
+  read(sd, msg_buf, MSG_BUF_LEN);
+  struct message m = decrypt(msg_buf);
+  assert(m.op == OK);
 
   // TODO(Pond): should we do checking if server is ready to receive file?
-
   send(sd, buf, fragment_size, 0);
+
+  read(sd, msg_buf, MSG_BUF_LEN);
+  m = decrypt(msg_buf);
+  assert(m.op == OK);
 }
 
 // TODO(Pond): maybe there is no need to load the whole file into cache?
