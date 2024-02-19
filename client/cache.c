@@ -1,10 +1,6 @@
 // TODO(Pond): might be better to cache to use mmap?
 
-#include <stddef.h>
-#include <sys.h>
-
-#include "params.h"
-#include "util.h"
+#include "cache.h"
 
 int has_cache(const char* path) {
   char cache_path[PATH_MAX] = FS_DATA->cache_dir;
@@ -90,4 +86,11 @@ int write_to_cache(const char* name, char* buf, size_t size, off_t offset) {
   }
 
   return pwrite(fd, buf, size, offset);
+}
+
+int remove_cache(const char* name) {
+  char cache_path[PATH_MAX] = FS_DATA->cache_dir;
+  cache_path = concat_path(2, cache_path, path);
+
+  return unlink(cache_path);
 }

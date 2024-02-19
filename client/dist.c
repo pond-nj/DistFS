@@ -159,5 +159,7 @@ void cache_to_remote(const char* name) {
   send_fragment(name, FS_DATA->socket_connections[NUM_REMOTE - 1], parity_buf,
                 one_fragment_size);
 
-  // TODO(Pond): do file closing here?
+  close(fd);
+
+  remove_cache(name);
 }

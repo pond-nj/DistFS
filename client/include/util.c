@@ -1,5 +1,4 @@
-#include <stdarg.h>
-#include <unistd.h>
+#include "util.h"
 
 int file_exist(const char* fname) {
   if (access(fname, F_OK) == 0) {

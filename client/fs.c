@@ -14,6 +14,8 @@
 #include <unistd.h>
 
 #include "config.h"
+#include "dist.h"
+#include "meta.h"
 #include "params.h"
 #include "util.h"
 
@@ -22,20 +24,6 @@
 #endif
 
 #include "log.h"
-
-//  All the paths I see are relative to the root of the mounted
-//  filesystem.  In order to get to the underlying filesystem, I need to
-//  have the mountpoint.  I'll save it away early on in main(), and then
-//  whenever I need a path for something I'll call this to construct
-//  it.
-static void fs_fullpath(char fpath[PATH_MAX], const char *path) {
-  strcpy(fpath, fs_DATA->rootdir);
-  strncat(fpath, path, PATH_MAX);  // ridiculously long paths will
-                                   // break here
-
-  log_msg("    fs_fullpath:  rootdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",
-          fs_DATA->rootdir, path, fpath);
-}
 
 ///////////////////////////////////////////////////////////
 //
@@ -49,6 +37,7 @@ static void fs_fullpath(char fpath[PATH_MAX], const char *path) {
  * mount option is given.
  */
 int fs_getattr(const char *path, struct stat *statbuf) {
+  // TODO(Pond):
   int retstat;
   char fpath[PATH_MAX];
 
@@ -75,21 +64,21 @@ int fs_getattr(const char *path, struct stat *statbuf) {
 // less than the size passed to fs_readlink()
 // fs_readlink() code by Bernardo F Costa (thanks!)
 int fs_readlink(const char *path, char *link, size_t size) {
-  int retstat;
-  char fpath[PATH_MAX];
+  // int retstat;
+  // char fpath[PATH_MAX];
 
   log_msg("\nfs_readlink(path=\"%s\", link=\"%s\", size=%d)\n", path, link,
           size);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  retstat = log_syscall("readlink", readlink(fpath, link, size - 1), 0);
-  if (retstat >= 0) {
-    link[retstat] = '\0';
-    retstat = 0;
-    log_msg("    link=\"%s\"\n", link);
-  }
+  // retstat = log_syscall("readlink", readlink(fpath, link, size - 1), 0);
+  // if (retstat >= 0) {
+  //   link[retstat] = '\0';
+  //   retstat = 0;
+  //   log_msg("    link=\"%s\"\n", link);
+  // }
 
-  return retstat;
+  return 0;
 }
 
 /** Create a file node
@@ -100,56 +89,62 @@ int fs_readlink(const char *path, char *link, size_t size) {
 // shouldn't that comment be "if" there is no.... ?
 int fs_mknod(const char *path, mode_t mode, dev_t dev) {
   int retstat;
-  char fpath[PATH_MAX];
 
   log_msg("\nfs_mknod(path=\"%s\", mode=0%3o, dev=%lld)\n", path, mode, dev);
-  fs_fullpath(fpath, path);
 
   // On Linux this could just be 'mknod(path, mode, dev)' but this
   // tries to be be more portable by honoring the quote in the Linux
   // mknod man page stating the only portable use of mknod() is to
   // make a fifo, but saying it should never actually be used for
   // that.
-  if (S_ISREG(mode)) {
-    retstat =
-        log_syscall("open", open(fpath, O_CREAT | O_EXCL | O_WRONLY, mode), 0);
-    if (retstat >= 0) retstat = log_syscall("close", close(retstat), 0);
-  } else if (S_ISFIFO(mode))
-    retstat = log_syscall("mkfifo", mkfifo(fpath, mode), 0);
-  else
-    retstat = log_syscall("mknod", mknod(fpath, mode, dev), 0);
 
-  return retstat;
+  // TODO(Pond): what does this do?
+
+  // TODO(Pond): log call here?
+  log_syscall("add_meta", add_meta(path, 0));
+
+  // if (S_ISREG(mode)) {
+  //   log_syscall("add_meta", add_meta(path, 0));
+  //   // if (retstat >= 0) retstat = log_syscall("close", close(retstat), 0);
+  // } else if (S_ISFIFO(mode))
+  //   retstat = log_syscall("mkfifo", mkfifo(fpath, mode), 0);
+  // else
+  //   retstat = log_syscall("mknod", mknod(fpath, mode, dev), 0);
+
+  return 0;
 }
 
 /** Create a directory */
 int fs_mkdir(const char *path, mode_t mode) {
-  char fpath[PATH_MAX];
+  // char fpath[PATH_MAX];
 
   log_msg("\nfs_mkdir(path=\"%s\", mode=0%3o)\n", path, mode);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  return log_syscall("mkdir", mkdir(fpath, mode), 0);
+  // return log_syscall("mkdir", mkdir(fpath, mode), 0);
+  return 0;
 }
 
 /** Remove a file */
 int fs_unlink(const char *path) {
-  char fpath[PATH_MAX];
+  // char fpath[PATH_MAX];
 
   log_msg("fs_unlink(path=\"%s\")\n", path);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  return log_syscall("unlink", unlink(fpath), 0);
+  // return log_syscall("unlink", unlink(fpath), 0);
+  return 0;
 }
 
 /** Remove a directory */
 int fs_rmdir(const char *path) {
-  char fpath[PATH_MAX];
+  // char fpath[PATH_MAX];
 
   log_msg("fs_rmdir(path=\"%s\")\n", path);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  return log_syscall("rmdir", rmdir(fpath), 0);
+  // return log_syscall("rmdir", rmdir(fpath), 0);
+  return 0;
 }
 
 /** Create a symbolic link */
@@ -158,81 +153,89 @@ int fs_rmdir(const char *path) {
 // while the 'link' is the link itself.  So we need to leave the path
 // unaltered, but insert the link into the mounted directory.
 int fs_symlink(const char *path, const char *link) {
-  char flink[PATH_MAX];
+  // char flink[PATH_MAX];
 
   log_msg("\nfs_symlink(path=\"%s\", link=\"%s\")\n", path, link);
-  fs_fullpath(flink, link);
+  // fs_fullpath(flink, link);
 
-  return log_syscall("symlink", symlink(path, flink), 0);
+  // return log_syscall("symlink", symlink(path, flink), 0);
+  return 0;
 }
 
 /** Rename a file */
 // both path and newpath are fs-relative
 int fs_rename(const char *path, const char *newpath) {
-  char fpath[PATH_MAX];
-  char fnewpath[PATH_MAX];
+  // char fpath[PATH_MAX];
+  // char fnewpath[PATH_MAX];
 
   log_msg("\nfs_rename(fpath=\"%s\", newpath=\"%s\")\n", path, newpath);
-  fs_fullpath(fpath, path);
-  fs_fullpath(fnewpath, newpath);
+  // fs_fullpath(fpath, path);
+  // fs_fullpath(fnewpath, newpath);
 
-  return log_syscall("rename", rename(fpath, fnewpath), 0);
+  // return log_syscall("rename", rename(fpath, fnewpath), 0);
+  return 0;
 }
 
 /** Create a hard link to a file */
 int fs_link(const char *path, const char *newpath) {
-  char fpath[PATH_MAX], fnewpath[PATH_MAX];
+  // char fpath[PATH_MAX], fnewpath[PATH_MAX];
 
   log_msg("\nfs_link(path=\"%s\", newpath=\"%s\")\n", path, newpath);
-  fs_fullpath(fpath, path);
-  fs_fullpath(fnewpath, newpath);
+  // fs_fullpath(fpath, path);
+  // fs_fullpath(fnewpath, newpath);
 
-  return log_syscall("link", link(fpath, fnewpath), 0);
+  // return log_syscall("link", link(fpath, fnewpath), 0);
+  return 0;
 }
 
 /** Change the permission bits of a file */
 int fs_chmod(const char *path, mode_t mode) {
-  char fpath[PATH_MAX];
+  // char fpath[PATH_MAX];
 
   log_msg("\nfs_chmod(fpath=\"%s\", mode=0%03o)\n", path, mode);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  return log_syscall("chmod", chmod(fpath, mode), 0);
+  // return log_syscall("chmod", chmod(fpath, mode), 0);
+  return 0;
 }
 
 /** Change the owner and group of a file */
 int fs_chown(const char *path, uid_t uid, gid_t gid)
 
 {
-  char fpath[PATH_MAX];
+  // char fpath[PATH_MAX];
 
   log_msg("\nfs_chown(path=\"%s\", uid=%d, gid=%d)\n", path, uid, gid);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  return log_syscall("chown", chown(fpath, uid, gid), 0);
+  // return log_syscall("chown", chown(fpath, uid, gid), 0);
+  return 0;
 }
 
 /** Change the size of a file */
 int fs_truncate(const char *path, off_t newsize) {
-  char fpath[PATH_MAX];
+  // char fpath[PATH_MAX];
 
   log_msg("\nfs_truncate(path=\"%s\", newsize=%lld)\n", path, newsize);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  return log_syscall("truncate", truncate(fpath, newsize), 0);
+  // return log_syscall("truncate", truncate(fpath, newsize), 0);
+  return 0;
 }
 
 /** Change the access and/or modification times of a file */
 /* note -- I'll want to change this as soon as 2.6 is in debian testing */
 int fs_utime(const char *path, struct utimbuf *ubuf) {
-  char fpath[PATH_MAX];
+  // char fpath[PATH_MAX];
 
   log_msg("\nfs_utime(path=\"%s\", ubuf=0x%08x)\n", path, ubuf);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  return log_syscall("utime", utime(fpath, ubuf), 0);
+  // return log_syscall("utime", utime(fpath, ubuf), 0);
+  return 0;
 }
 
+// TODO(Pond): read comments
 /** File open operation
  *
  * No creation, or truncation flags (O_CREAT, O_EXCL, O_TRUNC)
@@ -244,24 +247,12 @@ int fs_utime(const char *path, struct utimbuf *ubuf) {
  * Changed in version 2.2
  */
 int fs_open(const char *path, struct fuse_file_info *fi) {
-  int retstat = 0;
-  int fd;
-  char fpath[PATH_MAX];
-
   log_msg("\nfs_open(path\"%s\", fi=0x%08x)\n", path, fi);
-  fs_fullpath(fpath, path);
-
-  // if the open call succeeds, my retstat is the file descriptor,
-  // else it's -errno.  I'm making sure that in that case the saved
-  // file descriptor is exactly -1.
-  fd = log_syscall("open", open(fpath, fi->flags), 0);
-  if (fd < 0) retstat = log_error("open");
-
-  fi->fh = fd;
+  add_meta(path, 0);
 
   log_fi(fi);
 
-  return retstat;
+  return 0;
 }
 
 /** Read data from an open file
@@ -282,8 +273,6 @@ int fs_open(const char *path, struct fuse_file_info *fi) {
 // returned by read.
 int fs_read(const char *path, char *buf, size_t size, off_t offset,
             struct fuse_file_info *fi) {
-  int retstat = 0;
-
   log_msg(
       "\nfs_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
       path, buf, size, offset, fi);
@@ -311,18 +300,15 @@ int fs_read(const char *path, char *buf, size_t size, off_t offset,
 // documentation for the write() system call.
 int fs_write(const char *path, const char *buf, size_t size, off_t offset,
              struct fuse_file_info *fi) {
-  int retstat = 0;
-
   log_msg(
       "\nfs_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
       path, buf, size, offset, fi);
-  // no need to get fpath on this one, since I work from fi->fh not the path
   log_fi(fi);
 
   assert(size != 0);  // does not allow file of size 0
-  // TODO(Pond): change pwrite here
 
-  return log_syscall("pwrite", pwrite(fi->fh, buf, size, offset), 0);
+  return log_syscall("write_to_cache", write_to_cache(path, buf, size, offset),
+                     0);
 }
 
 /** Get file system statistics
@@ -333,18 +319,19 @@ int fs_write(const char *path, const char *buf, size_t size, off_t offset,
  * version 2.5
  */
 int fs_statfs(const char *path, struct statvfs *statv) {
-  int retstat = 0;
-  char fpath[PATH_MAX];
+  // int retstat = 0;
+  // char fpath[PATH_MAX];
 
   log_msg("\nfs_statfs(path=\"%s\", statv=0x%08x)\n", path, statv);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  // get stats for underlying filesystem
-  retstat = log_syscall("statvfs", statvfs(fpath, statv), 0);
+  // // get stats for underlying filesystem
+  // retstat = log_syscall("statvfs", statvfs(fpath, statv), 0);
 
-  log_statvfs(statv);
+  // log_statvfs(statv);
 
-  return retstat;
+  // return retstat;
+  return 0;
 }
 
 /** Possibly flush cached data
@@ -399,7 +386,8 @@ int fs_release(const char *path, struct fuse_file_info *fi) {
 
   // We need to close the file.  Had we allocated any resources
   // (buffers etc) we'd need to free them here as well.
-  return log_syscall("close", close(fi->fh), 0);
+
+  return log_syscall("cache_to_remote", cache_to_remote(path), 0);
 }
 
 /** Synchronize file contents
@@ -414,13 +402,14 @@ int fs_fsync(const char *path, int datasync, struct fuse_file_info *fi) {
           fi);
   log_fi(fi);
 
-  // some unix-like systems (notably freebsd) don't have a datasync call
-#ifdef HAVE_FDATASYNC
-  if (datasync)
-    return log_syscall("fdatasync", fdatasync(fi->fh), 0);
-  else
-#endif
-    return log_syscall("fsync", fsync(fi->fh), 0);
+  //   // some unix-like systems (notably freebsd) don't have a datasync call
+  // #ifdef HAVE_FDATASYNC
+  //   if (datasync)
+  //     return log_syscall("fdatasync", fdatasync(fi->fh), 0);
+  //   else
+  // #endif
+  // return log_syscall("fsync", fsync(fi->fh), 0);
+  return 0;
 }
 
 #ifdef HAVE_SYS_XATTR_H
@@ -434,66 +423,70 @@ int fs_fsync(const char *path, int datasync, struct fuse_file_info *fi) {
 /** Set extended attributes */
 int fs_setxattr(const char *path, const char *name, const char *value,
                 size_t size, int flags) {
-  char fpath[PATH_MAX];
+  // char fpath[PATH_MAX];
 
   log_msg(
       "\nfs_setxattr(path=\"%s\", name=\"%s\", value=\"%s\", size=%d, "
       "flags=0x%08x)\n",
       path, name, value, size, flags);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  return log_syscall("lsetxattr", lsetxattr(fpath, name, value, size, flags),
-                     0);
+  // return log_syscall("lsetxattr", lsetxattr(fpath, name, value, size, flags),
+  //                    0);
+  return 0;
 }
 
 /** Get extended attributes */
 int fs_getxattr(const char *path, const char *name, char *value, size_t size) {
-  int retstat = 0;
-  char fpath[PATH_MAX];
+  // int retstat = 0;
+  // char fpath[PATH_MAX];
 
   log_msg(
       "\nfs_getxattr(path = \"%s\", name = \"%s\", value = 0x%08x, size = "
       "%d)\n",
       path, name, value, size);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  retstat = log_syscall("lgetxattr", lgetxattr(fpath, name, value, size), 0);
-  if (retstat >= 0) log_msg("    value = \"%s\"\n", value);
+  // retstat = log_syscall("lgetxattr", lgetxattr(fpath, name, value, size), 0);
+  // if (retstat >= 0) log_msg("    value = \"%s\"\n", value);
 
-  return retstat;
+  // return retstat;
+  return 0;
 }
 
 /** List extended attributes */
 int fs_listxattr(const char *path, char *list, size_t size) {
-  int retstat = 0;
-  char fpath[PATH_MAX];
-  char *ptr;
+  // int retstat = 0;
+  // char fpath[PATH_MAX];
+  // char *ptr;
 
   log_msg("\nfs_listxattr(path=\"%s\", list=0x%08x, size=%d)\n", path, list,
           size);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  retstat = log_syscall("llistxattr", llistxattr(fpath, list, size), 0);
-  if (retstat >= 0) {
-    log_msg("    returned attributes (length %d):\n", retstat);
-    if (list != NULL)
-      for (ptr = list; ptr < list + retstat; ptr += strlen(ptr) + 1)
-        log_msg("    \"%s\"\n", ptr);
-    else
-      log_msg("    (null)\n");
-  }
+  // retstat = log_syscall("llistxattr", llistxattr(fpath, list, size), 0);
+  // if (retstat >= 0) {
+  //   log_msg("    returned attributes (length %d):\n", retstat);
+  //   if (list != NULL)
+  //     for (ptr = list; ptr < list + retstat; ptr += strlen(ptr) + 1)
+  //       log_msg("    \"%s\"\n", ptr);
+  //   else
+  //     log_msg("    (null)\n");
+  // }
 
-  return retstat;
+  // return retstat;
+  return 0;
 }
 
 /** Remove extended attributes */
 int fs_removexattr(const char *path, const char *name) {
-  char fpath[PATH_MAX];
+  // char fpath[PATH_MAX];
 
   log_msg("\nfs_removexattr(path=\"%s\", name=\"%s\")\n", path, name);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  return log_syscall("lremovexattr", lremovexattr(fpath, name), 0);
+  // return log_syscall("lremovexattr", lremovexattr(fpath, name), 0);
+  return 0;
 }
 #endif
 
@@ -505,24 +498,25 @@ int fs_removexattr(const char *path, const char *name) {
  * Introduced in version 2.3
  */
 int fs_opendir(const char *path, struct fuse_file_info *fi) {
-  DIR *dp;
-  int retstat = 0;
-  char fpath[PATH_MAX];
+  // DIR *dp;
+  // int retstat = 0;
+  // char fpath[PATH_MAX];
 
   log_msg("\nfs_opendir(path=\"%s\", fi=0x%08x)\n", path, fi);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  // since opendir returns a pointer, takes some custom handling of
-  // return status.
-  dp = opendir(fpath);
-  log_msg("    opendir returned 0x%p\n", dp);
-  if (dp == NULL) retstat = log_error("fs_opendir opendir");
+  // // since opendir returns a pointer, takes some custom handling of
+  // // return status.
+  // dp = opendir(fpath);
+  // log_msg("    opendir returned 0x%p\n", dp);
+  // if (dp == NULL) retstat = log_error("fs_opendir opendir");
 
-  fi->fh = (intptr_t)dp;
+  // fi->fh = (intptr_t)dp;
 
-  log_fi(fi);
+  // log_fi(fi);
 
-  return retstat;
+  // return retstat;
+  return 0;
 }
 
 /** Read directory
@@ -593,14 +587,15 @@ int fs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
  * Introduced in version 2.3
  */
 int fs_releasedir(const char *path, struct fuse_file_info *fi) {
-  int retstat = 0;
+  // int retstat = 0;
 
   log_msg("\nfs_releasedir(path=\"%s\", fi=0x%08x)\n", path, fi);
   log_fi(fi);
 
-  closedir((DIR *)(uintptr_t)fi->fh);
+  // closedir((DIR *)(uintptr_t)fi->fh);
 
-  return retstat;
+  // return retstat;
+  return 0;
 }
 
 /** Synchronize directory contents
@@ -613,13 +608,14 @@ int fs_releasedir(const char *path, struct fuse_file_info *fi) {
 // when exactly is this called?  when a user calls fsync and it
 // happens to be a directory? ??? >>> I need to implement this...
 int fs_fsyncdir(const char *path, int datasync, struct fuse_file_info *fi) {
-  int retstat = 0;
+  // int retstat = 0;
 
   log_msg("\nfs_fsyncdir(path=\"%s\", datasync=%d, fi=0x%08x)\n", path,
           datasync, fi);
   log_fi(fi);
 
-  return retstat;
+  // return retstat;
+  return 0;
 }
 
 /**
@@ -645,7 +641,9 @@ void *fs_init(struct fuse_conn_info *conn) {
   log_conn(conn);
   log_fuse_context(fuse_get_context());
 
-  return fs_DATA;
+  // TODO(Pond): init structure e.g. mem
+
+  return FS_DATA;
 }
 
 /**
@@ -657,6 +655,7 @@ void *fs_init(struct fuse_conn_info *conn) {
  */
 void fs_destroy(void *userdata) {
   log_msg("\nfs_destroy(userdata=0x%08x)\n", userdata);
+  // TODO(Pond): cleanup?
 }
 
 /**
@@ -671,17 +670,18 @@ void fs_destroy(void *userdata) {
  * Introduced in version 2.5
  */
 int fs_access(const char *path, int mask) {
-  int retstat = 0;
-  char fpath[PATH_MAX];
+  // int retstat = 0;
+  // char fpath[PATH_MAX];
 
   log_msg("\nfs_access(path=\"%s\", mask=0%o)\n", path, mask);
-  fs_fullpath(fpath, path);
+  // fs_fullpath(fpath, path);
 
-  retstat = access(fpath, mask);
+  // retstat = access(fpath, mask);
 
-  if (retstat < 0) retstat = log_error("fs_access access");
+  // if (retstat < 0) retstat = log_error("fs_access access");
 
-  return retstat;
+  // return retstat;
+  return 0;
 }
 
 /**
@@ -712,16 +712,17 @@ int fs_access(const char *path, int mask) {
  * Introduced in version 2.5
  */
 int fs_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi) {
-  int retstat = 0;
+  // int retstat = 0;
 
   log_msg("\nfs_ftruncate(path=\"%s\", offset=%lld, fi=0x%08x)\n", path, offset,
           fi);
   log_fi(fi);
 
-  retstat = ftruncate(fi->fh, offset);
-  if (retstat < 0) retstat = log_error("fs_ftruncate ftruncate");
+  // retstat = ftruncate(fi->fh, offset);
+  // if (retstat < 0) retstat = log_error("fs_ftruncate ftruncate");
 
-  return retstat;
+  // return retstat;
+  return 0;
 }
 
 /**
@@ -738,7 +739,7 @@ int fs_ftruncate(const char *path, off_t offset, struct fuse_file_info *fi) {
  */
 int fs_fgetattr(const char *path, struct stat *statbuf,
                 struct fuse_file_info *fi) {
-  int retstat = 0;
+  // int retstat = 0;
 
   log_msg("\nfs_fgetattr(path=\"%s\", statbuf=0x%08x, fi=0x%08x)\n", path,
           statbuf, fi);
@@ -748,14 +749,15 @@ int fs_fgetattr(const char *path, struct stat *statbuf,
   // opening it, and then using the FD for an fgetattr.  So in the
   // special case of a path of "/", I need to do a getattr on the
   // underlying root directory instead of doing the fgetattr().
-  if (!strcmp(path, "/")) return fs_getattr(path, statbuf);
+  // if (!strcmp(path, "/")) return fs_getattr(path, statbuf);
 
-  retstat = fstat(fi->fh, statbuf);
-  if (retstat < 0) retstat = log_error("fs_fgetattr fstat");
+  // retstat = fstat(fi->fh, statbuf);
+  // if (retstat < 0) retstat = log_error("fs_fgetattr fstat");
 
-  log_stat(statbuf);
+  // log_stat(statbuf);
 
-  return retstat;
+  // return retstat;
+  return 0;
 }
 
 struct fuse_operations fs_oper = {

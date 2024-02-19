@@ -1,0 +1,16 @@
+DistFS support Read, Write, of regular files
+In the future: support directory, Rename, Delete
+overwrite systemcall:
+fs_write
+fs_read
+fs_open
+fs_getattr TODO
+fs_mknod
+fs_unlink SOON
+fs_mkdir SOON
+fs_rename SOON
+fs_rmdir SOON
+fs_release
+fs_readdir TODO
+fs_init TODO
+fs_destroy HOW
